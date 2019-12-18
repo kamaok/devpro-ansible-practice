@@ -1,0 +1,50 @@
+---
+- name: Setup nginx proxy
+  include_role:
+    name: nginx
+
+- name: Creating Nginx configs
+  template:
+    src: "jenkins.conf.j2"
+    dest: /etc/nginx/sites-available/jenkins.conf
+  notify:
+    - restart Nginx
+  when:
+    -  ssl_connect|bool != true
+  tags:
+    - jenkins_create_nginx_config_for_jenkins_deb_based_distr
+
+- name: Creating Nginx symbolic configs
+  file:
+    src: /etc/nginx/sites-available/jenkins.conf
+    dest: /etc/nginx/sites-enabled/jenkins.conf
+    state: link
+  notify:
+    - restart Nginx
+  when:
+    -  ssl_connect|bool != true
+  tags:
+    - jenkins_create_nginx_config_for_jenkins_deb_based_distr
+
+- name: Creating Nginx SSL configs with force redirect http->https
+  template:
+    src: "jenkins-ssl.conf.j2"
+    dest: /etc/nginx/sites-available/jenkins.conf
+  notify:
+    - restart Nginx
+  when:
+    -  ssl_connect|bool == true
+  tags:
+    - jenkins_create_nginx_ssl_config_for_jenkins_deb_based_distr
+
+- name: Creating Nginx symbolic configs
+  file:
+    src: /etc/nginx/sites-available/jenkins.conf
+    dest: /etc/nginx/sites-enabled/jenkins.conf
+    state: link
+  notify:
+    - restart Nginx
+  when:
+    -  ssl_connect|bool == true
+  tags:
+    - jenkins_create_nginx_ssl_config_for_jenkins_deb_based_distr

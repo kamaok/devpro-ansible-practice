@@ -1,0 +1,42 @@
+- name: Install certbot on deb-based distributive
+  apt:
+    name: python3-certbot-nginx
+    state: present
+    update_cache: yes
+  when: ansible_distribution == 'Ubuntu' or
+        ansible_distribution == 'Debian'
+  tags:
+    - certbot_install_deb_based_distr
+
+- name: Install certbot on rpm-based distributive
+  yum:
+    name:
+      - python-certbot-nginx
+    state: present
+  when: ansible_distribution == 'CentOS' or
+        ansible_distribution == 'Red Hat Enterprise Linux' or
+        (ansible_distribution == 'Amazon' and ansible_distribution_major_version == '2')
+  tags:
+    - certbot_install_rpm_based_distr
+
+- name: Setup SSL Letsencrypt certificate
+  command: certbot certonly --nginx  --non-interactive --agree-tos --email "{{ admin_email }}" -d "{{ service_name }}.{{ domain_name }}"
+  args:
+    creates: /etc/letsencrypt/live/{{ service_name }}.{{ domain_name }}/fullchain.pem
+  register: setup_ssl
+  tags:
+    - create_ssl_certificate
+
+- name: Renew certs once a 2 month
+  cron:
+    name: renew ssl
+    job: "certbot renew --quiet"
+    month: "*/1"
+    weekday: "*"
+    day: "*"
+    hour: "*"
+    minute: "0"
+    state: present
+    backup: yes
+  tags:
+    - add_renew_ssl_cert_to_cron

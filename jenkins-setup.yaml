@@ -1,0 +1,14 @@
+---
+- hosts: jenkins_centos_classic
+  remote_user: "{{ custom_remote_user }}"
+  become: true
+  become_method: sudo
+  gather_facts: true
+  vars:
+    bind_interface: "{{ '127.0.0.1:8080' if nginx_proxy|bool == true else '8080' }}"
+  roles:
+    - { role: base_tools, tags: base_tools }
+    - { role: jenkins, tags: jenkins }
+    - { role: nginx, tags: nginx, when: nginx_proxy|bool == true }
+    - { role: ssl, tags: ssl, when: ssl_connect|bool == true }
+

@@ -1,0 +1,27 @@
+[jenkins_centos_base]
+jenkins_centos ansible_host=3.82.139.111
+
+[jenkins_ubuntu_base]
+jenkins_ubuntu ansible_host=52.90.198.162
+
+[jenkins_centos_classic_base]
+jenkins_centos_classic ansible_host=54.221.76.17
+
+#[jenkins_ubuntu_base:vars]
+#remote_user_ubuntu=ubuntu
+#ansible_python_interpreter=/usr/bin/python3
+
+#[jenkins_centos_base:vars]
+#remote_user_centos=ec2-user
+
+#[jenkins_centos_classic_base:vars]
+#remote_user_centos=centos
+
+[jenkins:children]
+jenkins_centos_base
+jenkins_centos_classic_base
+jenkins_ubuntu_base
+
+#[jenkins:vars]
+#ansible_port=22
+#ansible_ssh_private_key_file=~/.ssh/aws-us-east-1-ssh-keys.pem

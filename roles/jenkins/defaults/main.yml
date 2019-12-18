@@ -1,0 +1,9 @@
+---
+domain_name: kamaok.org.ua
+service_name: jenkins
+
+nginx_proxy: false
+ssl_connect: false
+
+maintenance_mode: false
+external_ip: 159.224.38.182

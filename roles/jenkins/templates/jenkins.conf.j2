@@ -1,0 +1,25 @@
+
+upstream {{ service_name }} {
+server 127.0.0.1:8080 fail_timeout=0;
+}
+ 
+server {
+     listen 80;
+     server_name {{ service_name }}.{{ domain_name }};
+ 
+     error_log /var/log/nginx/{{ service_name }}.error.log;
+     access_log /var/log/nginx/{{ service_name }}.access.log;
+ 
+     location / {
+ 
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_read_timeout 90s;
+ 
+        if (!-f $request_filename) {
+            proxy_pass http://{{ service_name }};
+            break;
+        }
+    }
+}

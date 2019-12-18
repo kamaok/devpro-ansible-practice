@@ -1,0 +1,4 @@
+############## default variable ##############
+admin_email: kamaok83@gmail.com
+domain_name: kamaok.org.ua
+service_name: jenkins

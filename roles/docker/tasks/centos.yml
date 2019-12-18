@@ -1,0 +1,77 @@
+---
+- name: Install dependenced packages for docker on rpm-based distributive
+  yum:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+      - python2-pip
+    state: present
+  tags:
+    - install_dependenced_packages_for_docker
+
+- name: Install package amazon-linux-extras on Amazon Linux 2
+  yum:
+    name:
+      - amazon-linux-extras
+    state: present
+  when: 
+    - ansible_distribution == 'Amazon' 
+    - ansible_distribution_major_version == '2'
+  tags:
+    - install_dependenced_packages_for_docker
+
+- name: Install docker via amazon-linux-extras packages on Amazon Linux 2
+  shell:  rpm -qa | grep -w docker ||  amazon-linux-extras install docker -y
+  changed_when: false
+  args:
+      warn: false
+  tags:
+    - install_docker_ce
+  when: 
+    - ansible_distribution == 'Amazon' 
+    - ansible_distribution_major_version == '2'
+
+- name: Add docker yum repository on Centos/RedHat
+  get_url:
+    url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    mode: 0440
+  tags:
+    - add_docker_repository
+  when: ansible_distribution == 'CentOS' or 
+        ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Install docker repo gpg-key on for Centos/RedHat
+  rpm_key:
+    state: present
+    key: https://download.docker.com/linux/centos/gpg
+  tags:
+    - install_docker_repo_gpg-key
+  when: ansible_distribution == 'CentOS' or 
+        ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Install docker on Centos/RedHat
+  yum:
+    name: docker-ce
+    state: present
+  tags:
+    - install_docker_ce
+  when: ansible_distribution == 'CentOS' or 
+        ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Enable and start docker on rpm-based distributive
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  tags:
+    - enable_and_start_docker
+
+
+- name: Ensure Python pip packages are installed on rpm-based distributive
+  pip:
+    name: docker
+    state: present
+  tags:
+    - docker_install_docker_using_pip

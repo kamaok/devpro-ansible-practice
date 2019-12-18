@@ -1,0 +1,15 @@
+---
+- name: install basic packages on deb-based distributive
+  apt:
+    name:
+      - htop
+      - atop
+      - iftop
+      - vim
+      - wget
+      - curl
+      - snmp
+    state: present
+    update_cache: yes
+  tags:
+    - base_install_basic_packages

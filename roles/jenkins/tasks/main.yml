@@ -1,0 +1,93 @@
+---
+- name: Setup docker
+  include_role:
+    name: docker
+  tags:
+    - jenkins_install_docker_for_jenkins
+
+- name: Restrict access to Jenkins - only from allowed IP-addresses
+  iptables:
+     action: insert
+     rule_num: '1'
+     chain: DOCKER-USER
+     protocol: tcp
+     destination_port: '8080'
+     source:   "{{ external_ip }}"
+     jump: ACCEPT
+     table: filter
+     state: present
+  when:
+    -  maintenance_mode|bool == true
+  tags:
+    - jenkins_restrict_access_to_jenkins
+
+- name: Restrict access to Jenkins - forbidden for all other
+  iptables:
+     action: insert
+     rule_num: '2'
+     chain: DOCKER-USER
+     protocol: tcp
+     destination_port: '8080'
+     jump: DROP
+     table: filter
+     state: present
+  when:
+    -  maintenance_mode|bool == true
+  tags:
+    - jenkins_restrict_access_to_jenkins
+
+- name: Disable restrict access to Jenkins
+  iptables:
+     chain: DOCKER-USER
+     protocol: tcp
+     destination_port: '8080'
+     jump: DROP
+     table: filter
+     state: absent
+  when:
+    -  maintenance_mode|bool != true
+  tags:
+    - jenkins_disable_restriction_access_to_jenkins
+
+- name: Create the directory for jenkins volume if it does not exist
+  file:
+    path: /opt/jenkins_home
+    state: directory
+    mode: '0755'
+    owner: "{{ custom_remote_user }}"
+    group: "{{ custom_remote_user }}"
+  tags:
+    - jenkins_create_jenkins_volume_directory
+
+
+- name: Run Jenkins container
+  docker_container:
+      name: jenkins
+      image: jenkins/jenkins:lts
+      network_mode: bridge
+      restart_policy: unless-stopped
+      restart: no
+      state: started
+      ports:
+        - "{{ bind_interface }}:8080"
+        - "50000:50000"
+      volumes:
+        - /opt/jenkins_home:/var/jenkins_home
+  tags:
+    - jenkins_run_jenkins_container
+
+- name: Add Nginx proxy config for Jenkins on deb-based distributive
+  include_tasks: nginx_conf_ubuntu.yml
+  when:
+    -  nginx_proxy|bool == true
+    -  ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+  tags:
+    - jenkins_add_proxy_for_jenkins_ubuntu
+
+- name: Add Nginx proxy config for Jenkins on rpm-based distributive
+  include_tasks: nginx_conf_centos.yml
+  when:
+    -  nginx_proxy|bool == true
+    -  ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or (ansible_distribution == 'Amazon' and ansible_distribution_major_version == '2')
+  tags:
+    - jenkins_add_proxy_for_jenkins_centos

@@ -1,0 +1,27 @@
+---
+- name: Install required packages docker on deb-based distributive
+  apt:
+    name:
+      - python-setuptools
+      - python3-pip
+      - docker.io
+      - containerd
+    update_cache: yes
+    state: present
+  tags:
+    - docker_install_required_packages_for_docker 
+
+- name:  Ensure Python pip packages are installed on deb-based distributive
+  pip:
+    name: docker
+    state: present
+  tags:
+    - docker_install_docker_using_pip
+
+- name: Enable and start docker on deb-based distributive
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  tags:
+    - enable_and_start_docker
